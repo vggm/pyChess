@@ -42,18 +42,14 @@ class King(Piece):
 
 
 class Queen(Piece):
-    pass
+    def canMove(self, movement, board):        
+        return rookMove(self,movement,board) or bishopMove(self,movement,board)
 
 
 class Rook(Piece):
-    def canMove(self, movement, board):
-        
-        if movement[0] != self.x and movement[1] != self.y:
-            return False
-        
+    def canMove(self, movement, board):        
         return rookMove(self,movement,board)
             
-
 
 class Knight(Piece):
     def canMove(self, movement, board):
@@ -62,7 +58,8 @@ class Knight(Piece):
 
 
 class Bishop(Piece):
-    pass
+    def canMove(self, movement, board):
+        return bishopMove(self,movement,board)
 
 
 class Pawn(Piece):
@@ -202,23 +199,64 @@ def isPassant(piece,lastPosition,board):
                 board[piece.y-1][piece.x].name == "Pawn" and board[piece.y-1][piece.x].moved2cells
     
     return False
+
+
+def bishopMove(piece,movement,board):
+    org = [piece.x,piece.y]
+    
+    if abs(piece.x - movement[0]) != abs(piece.y - movement[1]):
+        return False
+    
+    index = [1, 1]
+    
+    if piece.x > movement[0]:
+        index[0] *= -1
+        
+    if piece.y > movement[1]:
+        index[1] *= -1
+    
+    org[0] += index[0]
+    org[1] += index[1]
+    while org[0] != movement[0] and org[1] != movement[1]:
+        
+        if board[org[1]][org[0]] != None:
+            return False
+        
+        org[0] += index[0]
+        org[1] += index[1]
+    
+    return True
     
 # If there isnt pieces between piece and the move, returns True
 def rookMove(piece,movement,board):
+    
+    if movement[0] != piece.x and movement[1] != piece.y:
+            return False
+    
+    index = 1
+    
     if piece.x != movement[0]:
-        dst,org = greaterLower(movement[0],piece.x)
+        org = piece.x
         
-        while org < dst:
-            if board[piece.y][org] != None and org != piece.x:
+        if piece.x > movement[0]:
+            index *= -1
+        
+        org += index
+        while org != movement[0]:
+            if board[piece.y][org] != None:
                 return False
-            org += 1
+            org += index
     else:
-        dst,org = greaterLower(movement[1],piece.y)
+        org = piece.y
         
-        while org < dst:
-            if board[org][piece.x] != None and org != piece.y:
+        if piece.y > movement[1]:
+            index *= -1
+        
+        org += index
+        while org != movement[1]:
+            if board[org][piece.x] != None:
                 return False
-            org += 1
+            org += index
             
     return True
             
