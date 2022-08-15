@@ -1,9 +1,9 @@
 ![pyChess](img/pyChess.png)
 
-## pyChess
-Making chess with python 
+### pyChess
+Making chess with python 🐍
 
-The library I use to make the game is **pygame**.
+The library I use to make the game is **pygame** .
 You can install using **pip*** with the following command line:
 
 ```
