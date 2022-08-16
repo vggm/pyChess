@@ -1,14 +1,9 @@
 import pickle
 import sys
 import pygame as pg
+from state import State
 from utils import *
 from piece import *
-
-
-# this will be the matrix of the game
-board = []
-lastPosition = []
-###########
 
 
 def copy(x):
@@ -16,9 +11,6 @@ def copy(x):
 
 
 def main():
-    global board
-    global lastPosition
-    
     pg.init()
     pg.display.set_caption('PyChess!')
     
@@ -29,7 +21,12 @@ def main():
     while restart:
         restart = False
         
-        stackOfBoards = []
+        # this will be the matrix of the game
+        board = []
+        lastPosition = []
+        ###########
+        
+        stackOfStates = []
         board = [ [ None for i in range(BOARD_HEIGHT) ] for j in range(BOARD_WIDHT) ]
         
         # set white pieces
@@ -56,6 +53,8 @@ def main():
         for i in range(BOARD_WIDHT):
             board[1][i] = Pawn(coordToReal(i,1),False)
         
+        state = State(board)
+        
         # background image
         bg = pg.image.load('img/board.png')
         bg = pg.transform.scale(bg, (720,720))
@@ -73,8 +72,8 @@ def main():
                         restart = True
                         end = True
                     elif event.key == pg.K_LEFT:
-                        if len(stackOfBoards) != 0:
-                            board = stackOfBoards.pop()
+                        if len(stackOfStates) != 0:
+                            state = stackOfStates.pop()
                 
         
             mouseX, mouseY = pg.mouse.get_pos()
@@ -87,10 +86,10 @@ def main():
             if pieceCaught != None:
                 pieceCaught.draw(mouseX-PIECE_WIDTH/2,mouseY-PIECE_HEIGHT/2)
             elif pg.mouse.get_pressed()[0]:
-                if isPiece(mouseX,mouseY,board):
-                    stackOfBoards.append(copy(board))
+                if isPiece(mouseX,mouseY,state.board):
+                    stackOfStates.append(copy(state))
                     x,y = realToCoord(mouseX,mouseY)
-                    pieceCaught = board[y][x]
+                    pieceCaught = state.board[y][x]
                     pieceCaught.draw(mouseX,mouseY)
                     lastPosition = [x,y]
                     
@@ -102,23 +101,30 @@ def main():
             if pieceCaught != None and not pg.mouse.get_pressed()[0]:
                 col,row = realToCoord(mouseX,mouseY)
                 
-                if legalMove(pieceCaught,(col,row),board):
+                if legalMove(pieceCaught,(col,row),state):
                     x,y = coordToReal(col,row)
-                    pieceCaught.move(col,row)
-                    pieceCaught.draw(x,y)
                     
-                    if isPassant(pieceCaught,lastPosition,board):
-                        if pieceCaught.isWhite:
-                            board[pieceCaught.y+1][pieceCaught.x] = None
-                        else:
-                            board[pieceCaught.y-1][pieceCaught.x] = None
+                    if pieceCaught.isKing and canCastle(pieceCaught,(col,row),state.board):
+                        castle(pieceCaught,state.board[row][col],board)
+                        
+                    else:
+                        pieceCaught.move(col,row)
+                        pieceCaught.draw(x,y)
+                        
+                        if isPassant(pieceCaught,lastPosition,state.board):
+                            if pieceCaught.isWhite:
+                                state.board[pieceCaught.y+1][pieceCaught.x] = None
+                            else:
+                                state.board[pieceCaught.y-1][pieceCaught.x] = None
+                        
+                        state.board[lastPosition[1]][lastPosition[0]] = None
+                        state.board[row][col] = pieceCaught
                     
-                    board[lastPosition[1]][lastPosition[0]] = None
-                    board[row][col] = pieceCaught
+                    state.whiteTurn = not state.whiteTurn
                     
                     pieceCaught = None
                 else:
-                    stackOfBoards.pop()
+                    stackOfStates.pop()
                     
                     x,y = coordToReal(lastPosition[0],lastPosition[1])
                     pieceCaught.draw(x,y)                    
@@ -129,7 +135,7 @@ def main():
             window.blit(bg,PADDING)
             
             # show every piece on the board
-            for col in board:
+            for col in state.board:
                 for piece in col:
                     if piece != None:
                         window.blit(getSprite(piece.name,piece.isWhite),(piece.drawX,piece.drawY))

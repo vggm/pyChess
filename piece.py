@@ -1,3 +1,4 @@
+from curses import can_change_color
 from utils import *
 
 values = {'King': 0,
@@ -37,8 +38,22 @@ class Piece(object):
 
 
 class King(Piece):
+    def __init__(self, coord, isWhite):
+        super().__init__(coord, isWhite, True)
+        self.originalPosition = True
+        
+    def move(self, x, y):
+        self.x = x
+        self.y = y
+        self.originalPosition = False   
+        
     def canMove(self, movement, board):
-        return abs(self.x - movement[0]) <= 1 and abs(self.y - movement[1]) <= 1
+        distance = abs(self.x - movement[0]) <= 1 and abs(self.y - movement[1]) <= 1
+        
+        if distance > 1 and not canCastle(self,movement,board):
+            return False            
+        
+        return True
 
 
 class Queen(Piece):
@@ -47,6 +62,15 @@ class Queen(Piece):
 
 
 class Rook(Piece):
+    def __init__(self, coord, isWhite):
+        super().__init__(coord, isWhite)
+        self.originalPosition = True
+        
+    def move(self, x, y):
+        self.x = x
+        self.y = y
+        self.originalPosition = False
+        
     def canMove(self, movement, board):        
         return rookMove(self,movement,board)
             
@@ -201,6 +225,55 @@ def isPassant(piece,lastPosition,board):
     return False
 
 
+def canCastle(king,movement,board):
+    if not king.isKing:
+        return False
+
+    if board[movement[1]][movement[0]].name == "Rook":
+            rook = board[movement[1]][movement[0]]
+            if king.originalPosition and rook.originalPosition:
+                return rookMove(king,movement,board)
+        
+    return False  
+
+
+def castle(king, rook, board):
+    if abs(king.x - rook.x) == 3:
+        king.x = 6
+        rook.x = 5
+        
+        board[king.y][7] = None
+        board[king.y][4] = None
+        
+        board[king.y][6] = king
+        board[king.y][5] = rook
+        
+        x,y = coordToReal(king.x,king.y)
+        king.drawX = x
+        king.drawY = y
+        
+        x,y = coordToReal(rook.x,rook.y)
+        rook.drawX = x
+        rook.drawY = y
+    else:
+        king.x = 2
+        rook.x = 3
+        
+        board[king.y][0] = None
+        board[king.y][4] = None
+        
+        board[king.y][2] = king
+        board[king.y][3] = rook
+        
+        x,y = coordToReal(king.x,king.y)
+        king.drawX = x
+        king.drawY = y
+        
+        x,y = coordToReal(rook.x,rook.y)
+        rook.drawX = x
+        rook.drawY = y
+
+
 def bishopMove(piece,movement,board):
     org = [piece.x,piece.y]
     
@@ -259,9 +332,14 @@ def rookMove(piece,movement,board):
             org += index
             
     return True
-            
+
     
-def legalMove(piece,coord,board):
+def legalMove(piece,coord,state):
+    
+    board = state.board
+    
+    if state.whiteTurn and not piece.isWhite or not state.whiteTurn and piece.isWhite:
+        return False
     
     # If the cursor is out of the board return False
     if coord[0] >= BOARD_WIDHT or coord[0] < 0 or coord[1] >= BOARD_HEIGHT or coord[1] < 0:
@@ -275,7 +353,7 @@ def legalMove(piece,coord,board):
         return False
     
     # If the piece of that cell is the same color than the caught one, return False
-    if board[coord[1]][coord[0]] != None and board[coord[1]][coord[0]].isWhite == piece.isWhite: 
+    if board[coord[1]][coord[0]] != None and board[coord[1]][coord[0]].isWhite == piece.isWhite and not canCastle(piece,coord,board): 
         return False
     
     return True
