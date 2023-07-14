@@ -3,17 +3,25 @@
 ### pyChess
 Making chess with python 🐍
 
-The library I used to make this game is **pygame**.
-You can install using **pip** with the following command line:
+The graphic library used to make this game is **pygame**.
+You can install it using **pip** with the following command line:
 
 ```
 pip install pygame
 ```
 
-To download the project and eject the source you just need copy the next command lines and paste into the terminal:
+To download the project and run it, you just need to copy the next command lines and paste into the terminal:
 
+**Linux/MacOs:**
 ```
-git clone --recursive https://github.com/vggm/pyChess.git
+git clone https://github.com/vggm/pyChess.git
 cd pyChess/
 python3 main.py
+```
+
+**Windows:**
+```
+git clone https://github.com/vggm/pyChess.git
+cd pyChess/
+py main.py
 ```
