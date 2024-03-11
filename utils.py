@@ -61,26 +61,37 @@ def substract_coords(c1: BoardCoord, c2: BoardCoord) -> BoardCoord:
   return i-ii, j-jj
 
 
+def piece_from_coord(boardCoord: BoardCoord, board: Board) -> Piece:
+  i,j = boardCoord
+  return board[i][j]
+
+
+def same_color(p1: Piece, p2: Piece) -> bool:
+  p1_white = is_white_piece(p1)
+  p2_white = is_white_piece(p2)
+  return p1_white == p2_white or not p1_white and not p2_white
+
+
 def initialize_board(board: Board):
   # set white pieces
-  board[7][0] = 3
-  board[7][1] = 5
-  board[7][2] = 4
-  board[7][3] = 2
-  board[7][4] = 1
-  board[7][5] = 4
-  board[7][6] = 5
-  board[7][7] = 3
+  board[7][0] = ROOK
+  board[7][1] = KNIGHT
+  board[7][2] = BISHOP
+  board[7][3] = QUEEN
+  board[7][4] = KING
+  board[7][5] = BISHOP
+  board[7][6] = KNIGHT
+  board[7][7] = ROOK
 
   # set black pieces
-  board[0][0] = 13
-  board[0][1] = 15
-  board[0][2] = 14
-  board[0][3] = 12
-  board[0][4] = 11
-  board[0][5] = 14
-  board[0][6] = 15
-  board[0][7] = 13
+  board[0][0] = ROOK + 10
+  board[0][1] = KNIGHT + 10
+  board[0][2] = BISHOP + 10
+  board[0][3] = QUEEN + 10
+  board[0][4] = KING + 10
+  board[0][5] = BISHOP + 10
+  board[0][6] = KNIGHT + 10
+  board[0][7] = ROOK + 10
 
   # set pawns
   for i in range(8):

@@ -18,6 +18,9 @@ class State:
     self.pinned_pieces = pinned_pieces.copy()
     self.initial_kings = set([(0, 4), (7, 4)])
     self.initial_rooks = set([(0, 0), (0, 7), (7, 0), (7, 7)])
+    self.initial_pawns = set(
+      [(1, i) for i in range(8)] + [(6, i) for i in range(8)]
+    )
     
 
   def copy_board (self, board: Board):
@@ -35,6 +38,7 @@ class State:
     state.two_steps_pawn = self.two_steps_pawn
     state.initial_rooks = self.initial_rooks.copy()
     state.initial_kings = self.initial_kings.copy()
+    state.initial_pawns = self.initial_pawns.copy()
     return state
   
   def next_state (self):
@@ -45,8 +49,16 @@ class State:
     
     if nxt_state.two_steps_pawn.count > 0:
       nxt_state.two_steps_pawn.count -= 1
+      
+    if nxt_state.two_steps_pawn.count == 0:
+      nxt_state.two_steps_pawn.pos = []
     
     return nxt_state
+  
+  
+  def pawn_two_steps(self, pawn: BoardCoord):
+    self.two_steps_pawn.count = 2
+    self.two_steps_pawn.pos.append(pawn)
     
     
 class NodeGraph:

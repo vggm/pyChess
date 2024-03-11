@@ -107,13 +107,23 @@ def main():
       
       if caught_piece and not pg.mouse.get_pressed()[0]: # drop piece
         caught_piece = False
+        can_move = False
         i, j = real_to_board((mouse_x, mouse_y))
         if legal_move(selected_piece, (i, j), curr_state):
-          curr_state.board[i][j] = selected_piece
-          stateGraph.add(curr_state)
-          curr_state = curr_state.next_state()
+          
+          if can_castle(selected_piece, curr_state.last_postion, (i, j), curr_state):
+            castle_move(curr_state.last_postion, (i, j), curr_state)
+            can_move = True
+          else:
+            can_move = can_move_switch(selected_piece, (i, j), curr_state)
+            if can_move:
+              curr_state.board[i][j] = selected_piece
+             
+          if can_move:
+            stateGraph.add(curr_state)
+            curr_state = curr_state.next_state()
         
-        else:
+        if not can_move:
           i, j = curr_state.last_postion
           curr_state.board[i][j] = selected_piece
         
@@ -124,6 +134,7 @@ def main():
           piece = curr_state.board[i][j]
           
           # its a piece and must be the same turn as its color
+          # if True: # uncomment to move pieces the other turn
           if curr_state.white_turn == is_white_piece(piece):
             caught_piece = True
             # print('white' if is_white_piece(piece) else 'black')
