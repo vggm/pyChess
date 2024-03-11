@@ -1,71 +1,95 @@
-import pygame as pg
-
-# consts
-BLACK = (255, 255, 255)
-WHITE = (0, 0, 0)
-
-# screen size
-SCREEN_HEIGHT = 720
-SCREEN_WIDTH  = 720
-SIZE = SCREEN_HEIGHT, SCREEN_WIDTH
-
-# padding
-PADDING_X = 0
-PADDING_Y = 0
-PADDING = PADDING_X, PADDING_Y
-
-# cell sizes
-CELL_HEIGHT = 90
-CELL_WIDTH  = 90
-
-# piece sizes
-PIECE_HEIGHT = 80
-PIECE_WIDTH  = 80
-PIECE_SIZE = PIECE_HEIGHT, PIECE_WIDTH
-
-# board sizes
-BOARD_HEIGHT = 8
-BOARD_WIDHT  = 8
-TOTAL_CELLS = BOARD_HEIGHT * BOARD_WIDHT
+import pickle
+from constants import *
+from chess_types import *
 
 
-def getImage(url):
-    img = pg.image.load(url)
-    return pg.transform.smoothscale(img,PIECE_SIZE)
-
-
-# sync the image of the piece with its name
-
-whiteSprites = {'King':getImage('img/white/king.png'),
-                'Queen':getImage('img/white/queen.png'),
-                'Rook':getImage('img/white/rook.png'),
-                'Bishop':getImage('img/white/bishop.png'),
-                'Knight':getImage('img/white/knight.png'),
-                'Pawn':getImage('img/white/pawn.png')}
-
-blackSprites = {'King':getImage('img/black/king.png'),
-                'Queen':getImage('img/black/queen.png'),
-                'Rook':getImage('img/black/rook.png'),
-                'Bishop':getImage('img/black/bishop.png'),
-                'Knight':getImage('img/black/knight.png'),
-                'Pawn':getImage('img/black/pawn.png')}
-
-
-def getSprite(name, isWhite):
-    if isWhite:
-        return whiteSprites[name]
-    else:
-        return blackSprites[name]
-    
 # 0 <= x,y <= 8
-def coordToReal(x,y):
-    return 5+(SCREEN_WIDTH/8)*x, 5+(SCREEN_HEIGHT/8)*y
+def board_to_real(coords: BoardCoord):
+  """ Takes coord from game matrix and turns into coord in the monitor or window
+
+  Args:
+      coords (BoardCoord): coord from game matrix
+
+  Returns:
+      RealCoord: coords in the monitor
+  """
+  i, j = coords
+  padding = 5
+  return padding + (SCREEN_WIDTH / BOARD_WIDTH) * j,\
+          padding + (SCREEN_HEIGHT / BOARD_HEIGHT) * i
 
 # 0 <= x,y <= SCREEN_WIDTH,SCREEN_HEIGHT
-def realToCoord(x,y):
-    return int(x//CELL_HEIGHT), int(y//CELL_WIDTH)
+def real_to_board(coords: RealCoord):
+  """ Takes coords from the monitor (mouse pointer) and turns into board coords
 
-# Returns a tuple where [0] is the greater and [1] the lesser
-def greaterLower(x,y):
-    if x > y: return x,y
-    else: return y,x
+  Args:
+      coords (RealCoord): coord from window
+
+  Returns:
+      BoardCoord: coords in the game matrix
+  """
+  x, y = coords
+  return int(y // CELL_WIDTH), int(x // CELL_HEIGHT)
+
+
+# Returns a tuple where [0] is the greater and [1] the lower
+def greater_lower(x, y):
+  if x > y:
+    return x, y
+  else:
+    return y, x
+
+
+def is_white_piece(piece: Piece):
+  # white is under 10
+  return piece < 10
+
+
+def is_king_piece(piece: Piece):
+  # white king = 1 / black king = 11
+  return piece % 10 == 1
+
+def piece_name(piece: Piece) -> str:
+  return piece_to_name[piece % 10]
+
+def copy(structure):
+  return pickle.loads(pickle.dumps(structure))
+
+
+def substract_coords(c1: BoardCoord, c2: BoardCoord) -> BoardCoord:
+  (i, j), (ii, jj) = c1, c2
+  return i-ii, j-jj
+
+
+def initialize_board(board: Board):
+  # set white pieces
+  board[7][0] = 3
+  board[7][1] = 5
+  board[7][2] = 4
+  board[7][3] = 2
+  board[7][4] = 1
+  board[7][5] = 4
+  board[7][6] = 5
+  board[7][7] = 3
+
+  # set black pieces
+  board[0][0] = 13
+  board[0][1] = 15
+  board[0][2] = 14
+  board[0][3] = 12
+  board[0][4] = 11
+  board[0][5] = 14
+  board[0][6] = 15
+  board[0][7] = 13
+
+  # set pawns
+  for i in range(8):
+    board[1][i] = 16
+    board[6][i] = 6
+
+
+def print_board(board: Board) -> None:
+  for row in board:
+    for value in row:
+      print(f'{value:>2}', end=' ')
+    print()
