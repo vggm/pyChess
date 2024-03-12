@@ -104,25 +104,60 @@ def king_can_move(piece_selected: Piece, piece_on_cell: Piece, king: BoardCoord,
       or is_white_piece(piece_selected) != is_white_piece(piece_on_cell))
 
 
+def pawn_can_attack(piece: Piece, piece_on_cell: Piece, pawn: BoardCoord, move: BoardCoord) -> bool:
+  (i, j), (ii, jj) = pawn, move
+  
+  if piece_on_cell == VOID:
+    return False
+  
+  if jj not in [j-1, j+1]:
+    return False
+  
+  if is_white_piece(piece):
+    if i-1 != ii:
+      return False
+  else: # black piece
+    if i+1 != ii:
+      return False
+      
+  return True
+
+
 def pawn_can_move(piece_selected: Piece, piece_on_cell: Piece, pawn: BoardCoord, move: BoardCoord, state: State) -> bool:
   (i, j), (ii, jj) = pawn, move
   
   if pawn in state.pinned_pieces:
     return False
   
+  # cannot go back
+  if is_white_piece(piece_selected):
+    if ii > i:
+      return False
+  else:
+    if ii < i:
+      return False
+  
   distance = abs(i-ii)
-  if j - jj != 0: # cannot move horizontally
+  # cannot move horizontally unless it can attack
+  if j - jj != 0 and not pawn_can_attack(piece_selected, piece_on_cell, pawn, move): 
     return False
   
   if distance > 2: # cannot move more than two steps
     return False
   
   # only can move two steps at the initial cell
-  if distance == 2 and pawn not in state.initial_pawns:
-    return False 
+  if distance == 2:
+    if pawn not in state.initial_pawns:
+      return False 
+    if is_white_piece(piece_selected):
+      if piece_from_coord((i-1, j), state.board) != VOID:
+        return False
+    else:
+      if piece_from_coord((i+1, j), state.board) != VOID:
+        return False
   
   # must not be any piece in the cell
-  if piece_on_cell != VOID:
+  if j == jj and piece_on_cell != VOID:
     return False
   
   return True
@@ -163,7 +198,48 @@ def bishop_can_move(piece_selected: Piece, piece_on_cell: Piece, bishop: BoardCo
     if piece_from_coord((i+(k*v), j+(k*h)), state.board) != VOID:
       return False                                                  
   
-  return True                                        
+  return True  
+
+
+def rook_can_move(piece_selected: Piece, piece_on_cell: Piece, rook: BoardCoord, move: BoardCoord, state: State) -> bool:
+  (i, j), (ii, jj) = rook, move
+  
+  if rook in state.pinned_pieces:
+    return False
+  
+  if piece_on_cell != VOID and same_color(piece_selected, piece_on_cell):
+    return False
+  
+  v_distance = abs(i - ii)
+  h_distance = abs(j - jj)
+  
+  # only can move vertically or horizontally, but no both
+  if v_distance != 0 and h_distance != 0:
+    return False
+  
+  v = 1 if i < ii else -1
+  h = 1 if j < jj else -1
+  
+  mv, mh = (0, 1) if h_distance > 0 else (1, 0)
+  
+  for k in range(1, v_distance or h_distance):
+    if piece_from_coord((i+(k*v)*mv, j+(k*h)*mh), state.board) != VOID:
+      return False                                                  
+  
+  return True          
+
+
+def queen_can_move(piece_selected: Piece, piece_on_cell: Piece, queen: BoardCoord, move: BoardCoord, state: State) -> bool:
+  (i, j), (ii, jj) = queen, move
+  
+  if queen in state.pinned_pieces:
+    return False
+  
+  if not rook_can_move(piece_selected, piece_on_cell, queen, move, state) \
+    and not bishop_can_move(piece_selected, piece_on_cell, queen, move, state):
+    return False
+  
+  return True                            
 
 
 def can_move_switch(selected_piece: Piece, move: BoardCoord, state: State) -> bool:
@@ -180,7 +256,9 @@ def can_move_switch(selected_piece: Piece, move: BoardCoord, state: State) -> bo
 
 movements = {
   KING: king_can_move,
+  QUEEN: queen_can_move,
   PAWN: pawn_can_move,
   KNIGHT: knight_can_move,
   BISHOP: bishop_can_move,
+  ROOK: rook_can_move
 }
