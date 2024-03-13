@@ -160,6 +160,42 @@ class Movement:
         return False
         
     return True
+  
+  
+  def en_passant(self) -> bool:
+    (i, j), (ii, jj) = self.start, self.end
+    
+    if self.piece_on_cell != VOID:
+      return False
+    
+    if jj not in [j-1, j+1]:
+      return False
+    
+    if is_white_piece(self.selected_piece):
+      if i-1 != ii:
+        return False
+    else: # black piece
+      if i+1 != ii:
+        return False
+      
+    if jj == j-1:
+      coord_enemy_pawn = (i, j-1)
+      enemy_pawn = piece_from_coord(coord_enemy_pawn, self.state.board)
+    else:
+      coord_enemy_pawn = (i, j+1)
+      enemy_pawn = piece_from_coord(enemy_pawn, self.state.board)
+      
+    if enemy_pawn != PAWN:
+      return False  
+    
+    if enemy_pawn not in self.state.two_steps_pawn.pos:
+      return False
+    
+    if is_white_piece(self.selected_piece) and is_white_piece(enemy_pawn)\
+      or not is_white_piece(self.selected_piece) and not is_white_piece(enemy_pawn):
+      return False
+    
+    return True
 
 
   def pawn_can_move(self) -> bool:
@@ -178,14 +214,14 @@ class Movement:
     
     distance = abs(i-ii)
     # cannot move horizontally unless it can attack
-    if j - jj != 0 and not self.pawn_can_attack(): 
+    if j - jj != 0 and not self.pawn_can_attack() and not self.en_passant(): 
       return False
     
     if distance > 2: # cannot move more than two steps
       return False
     
     # only can move two steps at the initial cell
-    if distance == 2:
+    if distance == 2:      
       if self.start not in self.state.initial_pawns:
         return False 
       if is_white_piece(self.selected_piece):
