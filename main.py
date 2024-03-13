@@ -3,7 +3,7 @@ import pygame as pg
 from state import State, StateGraph
 from utils import *
 from sprites import *
-from movement import *
+from movement import Movement
 
 
 def main():
@@ -23,6 +23,8 @@ def main():
 
     stateGraph = StateGraph()
     initialize_board(gameBoard)
+    
+    movement_checker = Movement()
 
     curr_state = State(gameBoard)
     stateGraph.add(curr_state)
@@ -52,70 +54,23 @@ def main():
               curr_state = stateGraph.next()
 
       mouse_x, mouse_y = pg.mouse.get_pos()
-
-      # if there is a piece caught, it flies over the board whenever the cursor goes
-      # if there isn't a piece caught and the left bottom of the mouse if pressed over
-      #   a piece, that piece is now caught
-
-      # if piece_caught is not None:
-      #   piece_caught.draw(mouse_x - PIECE_WIDTH / 2, mouse_y - PIECE_HEIGHT / 2)
-      # elif pg.mouse.get_pressed()[0]:
-      #   if is_a_piece(mouse_x, mouse_y, curr_state.board):
-      #     stack_of_states.append(copy(curr_state))
-      #     i, j = real_to_board(mouse_x, mouse_y)
-      #     piece_caught = curr_state.board[i][j]
-      #     piece_caught.draw(mouse_x, mouse_y)
-      #     last_position = [i, j]
-
-      # if the player drop the piece:
-      #   if it is a legalMove, the piece will move
-      #   if it isn't a legalMove, the piece will not move
-
-      # if piece_caught is not None and not pg.mouse.get_pressed()[0]:
-      #   row, col = real_to_board(mouse_x, mouse_y)
-
-        # if legal_move(piece_caught, (col, row), curr_state):
-      #     x, y = board_to_real(col, row)
-
-      #     if piece_caught.isKing and can_castle(piece_caught, (col, row), curr_state.board):
-      #       castle(piece_caught, curr_state.board[row][col], board)
-
-      #     else:
-      #       piece_caught.move(col, row)
-      #       piece_caught.draw(x, y)
-
-      #       if is_passant(piece_caught, last_position, curr_state.board):
-      #         if piece_caught.isWhite:
-      #           curr_state.board[piece_caught.y + 1][piece_caught.x] = None
-      #         else:
-      #           curr_state.board[piece_caught.y - 1][piece_caught.x] = None
-
-      #       curr_state.board[last_position[1]][last_position[0]] = None
-      #       curr_state.board[row][col] = piece_caught
-      #       print_board(curr_state.board)
-
-      #     curr_state.white_turn = not curr_state.white_turn
-      #     piece_caught = None
-
-      #   else:
-      #     stack_of_states.pop()
-
-      #     x, y = board_to_real(last_position[0], last_position[1])
-      #     piece_caught.draw(x, y)
-      #     piece_caught = None
       
+      if caught_piece and pg.mouse.get_pressed()[2]: # drop piece
+        caught_piece = False
+        i, j = curr_state.last_postion
+        curr_state.board[i][j] = selected_piece
       
       if caught_piece and not pg.mouse.get_pressed()[0]: # drop piece
         caught_piece = False
         can_move = False
         i, j = real_to_board((mouse_x, mouse_y))
-        if legal_move(selected_piece, (i, j), curr_state):
+        if mouse_in_board((mouse_x, mouse_y)) and movement_checker.legal_move(selected_piece, (i, j), curr_state):
           
-          if can_castle(selected_piece, curr_state.last_postion, (i, j), curr_state):
-            castle_move(curr_state.last_postion, (i, j), curr_state)
+          if movement_checker.can_castle():
+            movement_checker.castle_move()
             can_move = True
           else:
-            can_move = can_move_switch(selected_piece, (i, j), curr_state)
+            can_move = movement_checker.can_move_switch()
             if can_move:
               curr_state.board[i][j] = selected_piece
              
@@ -129,7 +84,7 @@ def main():
         
         
       elif not caught_piece and pg.mouse.get_pressed()[0]: # select piece
-        if is_a_piece((mouse_x, mouse_y), curr_state.board):
+        if mouse_in_board((mouse_x, mouse_y)) and is_a_piece((mouse_x, mouse_y), curr_state.board):
           i, j = real_to_board((mouse_x, mouse_y))
           piece = curr_state.board[i][j]
           
@@ -164,6 +119,7 @@ def main():
 
       pg.display.flip()
       clock.tick(60)
+    # main loop
 
 
 if __name__ == "__main__":

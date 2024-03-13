@@ -56,6 +56,11 @@ def copy(structure):
   return pickle.loads(pickle.dumps(structure))
 
 
+def mouse_in_board(realCoord: RealCoord) -> bool:
+  x, y = realCoord
+  return 0 <= x < SCREEN_WIDTH and 0 <= y < SCREEN_HEIGHT
+
+
 def substract_coords(c1: BoardCoord, c2: BoardCoord) -> BoardCoord:
   (i, j), (ii, jj) = c1, c2
   return i-ii, j-jj
@@ -64,6 +69,11 @@ def substract_coords(c1: BoardCoord, c2: BoardCoord) -> BoardCoord:
 def piece_from_coord(boardCoord: BoardCoord, board: Board) -> Piece:
   i,j = boardCoord
   return board[i][j]
+
+
+def is_a_piece(realCoord: RealCoord, board: Board) -> bool:
+  i, j = real_to_board(realCoord)
+  return board[i][j] != VOID
 
 
 def same_color(p1: Piece, p2: Piece) -> bool:
@@ -104,3 +114,4 @@ def print_board(board: Board) -> None:
     for value in row:
       print(f'{value:>2}', end=' ')
     print()
+  print()
